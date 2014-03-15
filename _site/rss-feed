@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<rss version="2.0"><channel><title>Benedek's pages</title><link>https://github.com/nakkaya/static</link><description>Of Herbs and Stewed Rabbit</description><item><title>some blog post</title><link>https://github.com/2014/03/15/something/</link><pubDate>Sat, 15 Mar 2014 00:00:00 +0000</pubDate><description>&lt;p&gt;some hello world &lt;em&gt;text&lt;/em&gt;&lt;/p&gt;&lt;p&gt;A paragraph:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;bullet&lt;/li&gt;
+  &lt;li&gt;points&lt;/li&gt;
+&lt;/ul&gt;&lt;p&gt;this is some clojure:&lt;/p&gt;
+&lt;!--?prettify lang=clj--&gt;
+&lt;pre&gt;&lt;code&gt;(fn [system]
+  (clj-components.bootstrap/init!
+     system system system
+     (merge {
+       :http-handler #&amp;#39;fe.web/handler
+       :http-request-logs? true
+       :nrepl-port 7888
+       :loggers [{:ns &amp;#39;fe :level :info}]}
+      bootstrap-args)
+     fe.system.component-registry/constructors))
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;this is some elisp:&lt;/p&gt;
+&lt;!--?prettify lang=emacs-lisp--&gt;
+&lt;pre&gt;&lt;code&gt;(defun cljr--delete-and-extract-sexp-with-nested-sexps ()
+  &amp;quot;Returns list of strings representing the nested sexps if there is any.
+   In case there are no nested sexp the list will have only one element.
+   Not recursive, does not drill down into nested sexps
+   inside the first level nested sexps.&amp;quot;
+  (let* ((beg (point))
+         (sexp-start beg)
+         (end (progn (paredit-forward)
+                     (point)))
+         nested)
+    (paredit-backward)
+    (paredit-forward-down)
+    (while (/= sexp-start end)
+      (paredit-move-forward)
+      (push (s-trim (buffer-substring sexp-start (point))) nested)
+      (setq sexp-start (point)))
+    (delete-region beg end)
+    (nreverse (cons (concat (nth 1 nested) (car nested)) (or (nthcdr 2 nested) &amp;#39;())))))
+&lt;/code&gt;&lt;/pre&gt;</description></item><item><title>foo bar on ruby</title><link>https://github.com/2014/03/14/foobaron-ruby/</link><pubDate>Fri, 14 Mar 2014 00:00:00 +0000</pubDate><description>&lt;p&gt;this post is about ruby&lt;/p&gt;
+&lt;!--?prettify lang=ruby--&gt;
+&lt;pre&gt;&lt;code&gt;# Does commonly used redis persistence actions
+module RedisBlobPersistence
+
+  def persist
+    $redis.set(key, value)
+  end
+
+  private
+
+  def value
+    Marshal::dump(self)
+  end
+
+  def self.load (root_node_id)
+    Marshal::load($redis.get(root_node_id))
+  end
+
+end
+&lt;/code&gt;&lt;/pre&gt;</description></item></channel></rss>

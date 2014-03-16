@@ -18,12 +18,12 @@
    [:div.container
     [:div.row
      [:div.col-md-12
-      (if (or (= (:type metadata) :post)
+      (when (or (= (:type metadata) :post)
               (= (:type metadata) :site))
         [:div.page-header
          [:h1 (:title metadata)]])
-
-      content]
+      [:div.entry
+       content]]
 
      (if (= (:type metadata) :post)
        (reduce

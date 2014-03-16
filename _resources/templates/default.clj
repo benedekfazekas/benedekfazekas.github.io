@@ -30,23 +30,7 @@
      	(fn[h v]
      	  (conj h [:a {:href (str "/tags/#" v)} (str v " ")]))
      	[:div {:class "post-tags"} "Tags: "]
-     	(.split (:tags metadata) " ")))]
-
-    (if (= (:type metadata) :post)
-      [:div
-       {:id "related"}
-       [:h3 {:class "random-posts"} "Random Posts"]
-       [:ul
-    	{:class "posts"}
-	(map
-	 #(let [f %
-		url (static.core/post-url f)
-		[metadata _] (static.io/read-doc f)
-		date (static.core/parse-date
-		      "yyyy-MM-dd" "dd MMM yyyy"
-		      (re-find #"\d*-\d*-\d*" (str f)))]
-	   [:li [:span date] [:a {:href url} (:title metadata)]])
-	 (take 5 (shuffle (static.io/list-files :posts))))]])]
+     	(.split (:tags metadata) " ")))]]
    [:script {:src "//google-code-prettify.googlecode.com/svn/loader/run_prettify.js"}]
    [:script {:src "//google-code-prettify.googlecode.com/svn/trunk/src/lang-clj.js"}]
 
@@ -56,6 +40,6 @@
       [:div.col-md-12
        [:p "Built with "
         [:a {:href "http://getbootstrap.com/"} "Bootstrap"] " and "
-        [:a {:ref "https://github.com/nakkaya/static"} "Static"]
+        [:a {:href "https://github.com/nakkaya/static"} "Static"]
         [:br]
         [:p "&copy; 2014"]]]]]]]]]

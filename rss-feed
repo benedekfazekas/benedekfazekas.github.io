@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<rss version="2.0"><channel><title>Benedek's pages</title><link>https://github.com/nakkaya/static</link><description>Of Herbs and Stewed Rabbit</description><item><title>some blog post</title><link>https://github.com/2014/03/15/something/</link><pubDate>Sat, 15 Mar 2014 00:00:00 +0000</pubDate><description>&lt;p&gt;some hello world &lt;em&gt;text&lt;/em&gt;&lt;/p&gt;&lt;p&gt;A paragraph:&lt;/p&gt;
+<rss version="2.0"><channel><title>Benedek's pages</title><link>https://github.com/nakkaya/static</link><description>Of Herbs and Stewed Rabbit</description><item><title>some blog post enhanced</title><link>https://github.com/2014/03/15/something/</link><pubDate>Sat, 15 Mar 2014 00:00:00 +0000</pubDate><description>&lt;p&gt;some hello world &lt;em&gt;text&lt;/em&gt;&lt;/p&gt;&lt;p&gt;A paragraph:&lt;/p&gt;
 &lt;ul&gt;
   &lt;li&gt;bullet&lt;/li&gt;
   &lt;li&gt;points&lt;/li&gt;

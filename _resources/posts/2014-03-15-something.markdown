@@ -1,5 +1,5 @@
 ---
-title: some blog post
+title: some blog post enhanced
 date: 2014-03-15
 description: just some post
 tags: clojure, elisp, emacs

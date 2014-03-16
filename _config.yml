@@ -1,2 +1,1 @@
-source: _site
 exclude: [config.clj]

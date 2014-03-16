@@ -1,4 +1,4 @@
-{:title "Benedek's pages"}
+{:title "Of Herbs and Stewed Rabbit"}
 
 [:div.container
  [:div.row

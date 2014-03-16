@@ -18,3 +18,9 @@ pre code {
 b, strong {
     color: #5bc0de;
 }
+
+.sidenote {
+    font-size: 80%;
+    font-style: italic;
+    line-height: 1.5;
+}

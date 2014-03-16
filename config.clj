@@ -1,4 +1,4 @@
-[:site-title "Benedek's pages"
+[:site-title "Of Herbs and Stewed Rabbit"
  :site-description "Of Herbs and Stewed Rabbit"
  :in-dir "_resources/"
  :out-dir "_site"

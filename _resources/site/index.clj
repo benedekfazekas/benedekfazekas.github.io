@@ -2,7 +2,7 @@
 
 [:div.container
  [:div.row
-  [:div.col-lg-4
+  [:div.col-lg-12
    [:div.list-group
     (map
      #(let [f %
@@ -12,4 +12,5 @@
                   "yyyy-MM-dd" "dd MMM yyyy"
                   (re-find #"\d*-\d*-\d*" (str f)))]
         [:a {:href url :class "list-group-item"} (str date " -- " (:title metadata))])
-     (take 25 (reverse (static.io/list-files :posts))))]]]]
+     (take 25 (reverse (static.io/list-files :posts))))]
+   [:p [:a {:href "/rss-feed"} "RSS feed"]]]]]

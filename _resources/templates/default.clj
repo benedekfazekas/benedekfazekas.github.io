@@ -42,4 +42,4 @@
         [:a {:href "http://getbootstrap.com/"} "Bootstrap"] " and "
         [:a {:href "https://github.com/nakkaya/static"} "Static"]
         [:br]
-        [:p "&copy; 2014"]]]]]]]]]
+        [:p "&copy; 2014-2015"]]]]]]]]]

@@ -44,10 +44,7 @@
         [:a {:href "https://github.com/nakkaya/static"} "Static"]
         [:br]
         [:p
-         "&copy; 2014-2015 Benedek Fazekas"
-         " | "
-         [:a {:href "https://github.com/benedekfazekas"} "@github"]
-         " | "
-         [:a {:href "https://twitter.com/bfazek"} "@twitter"]
-         " | "
-         ]]]]]]]]]
+         (interleave ["&copy; 2014-2015 Benedek Fazekas"
+                      [:a {:href "https://github.com/benedekfazekas"} "@github"]
+                      [:a {:href "https://twitter.com/bfazek"} "@twitter"]]
+                     (cycle [" | "]))]]]]]]]]]

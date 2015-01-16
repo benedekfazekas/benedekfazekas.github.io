@@ -17,19 +17,20 @@
   [:div.content
    [:div.container
     [:div.row
-     [:div.col-md-12
+     [:div.col-md-8
       (when (or (= (:type metadata) :post)
               (= (:type metadata) :site))
         [:div.page-header
          [:h1 (:title metadata)]])
       [:div.entry
        content]]
+     [:div.col-md-4]
 
      (if (= (:type metadata) :post)
        (reduce
      	(fn[h v]
      	  (conj h [:a {:href (str "/tags/#" v)} (str v " ")]))
-     	[:div {:class "post-tags"} "Tags: "]
+     	[:div.col-md-12 {:class "post-tags"} "Tags: "]
      	(.split (:tags metadata) " ")))]]
    [:script {:src "//google-code-prettify.googlecode.com/svn/loader/run_prettify.js"}]
    [:script {:src "//google-code-prettify.googlecode.com/svn/trunk/src/lang-clj.js"}]
@@ -42,4 +43,11 @@
         [:a {:href "http://getbootstrap.com/"} "Bootstrap"] " and "
         [:a {:href "https://github.com/nakkaya/static"} "Static"]
         [:br]
-        [:p "&copy; 2014-2015"]]]]]]]]]
+        [:p
+         "&copy; 2014-2015 Benedek Fazekas"
+         " | "
+         [:a {:href "https://github.com/benedekfazekas"} "@github"]
+         " | "
+         [:a {:href "https://twitter.com/bfazek"} "@twitter"]
+         " | "
+         ]]]]]]]]]

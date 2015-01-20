@@ -14,7 +14,8 @@
                   (re-find #"\d*-\d*-\d*" (str f)))]
         [:div [:h2 [:a {:href url} (str (:title metadata) "...")]]
          [:p {:class "publish_date"} date]
-         (take (+ (.indexOf content "</p>") 4) content)])
+         (take (+ (.indexOf content "</p>") 4) content)
+         [:p [:a {:href url} [:strong "[...]"]]]])
      (take 25 (reverse (static.io/list-files :posts))))]
    [:p [:a {:href "/rss-feed"} "RSS feed"]]]
   [:div.col-lg-4]]]

@@ -5,11 +5,11 @@ description: Regression testing of webapps by comparing html output as data
 tags: testing, regression, tdd, CI, clojure, enlive, MailOnline
 ---
 
-An automated regression test suite is a very valuable asset, however most of the times it [does not come cheap](http://www.pitheringabout.com/?p=995&cpage=1#comment-21254). You need to write your unit and/or functional tests and add them to the regression suite and then, and this is the real pain: maintain them. Almost every single refactoring means some work on the test code too. We've found a way around this at the MailOnline, and get a really valuable regression test suite for cheap. Perhaps it's worth to share the details.
+An automated regression test suite is a very valuable asset, however most of the times it [**does not come cheap**](http://www.pitheringabout.com/?p=995&cpage=1#comment-21254). You need to write your unit and/or functional tests and add them to the regression suite and then, and this is the real pain: maintain them. Almost every single refactoring means some work on the test code too. We've found a way around this at the MailOnline, and get a really valuable regression test suite for cheap. Perhaps it's worth to share the details.
 
 Our regression test suite was not originally created as such. We aimed to solve a different testing problem. Since our project started off as a rewrite project, ie. rewriting the application producing the MailOnline website in clojure -- it was originally implemented in java and spring MVC --, the problem was how to make sure and prove that we are producing the same output. Mind you, even defining what is the same output here is not trivial as we did not care about whitespaces or other not really important, minor differences in the html output. Later we realised that the same idea can be reused to catch regressions and solve other testing problems too. More on this later.
 
-The key idea of solving this was to use [enlive](https://github.com/cgrand/enlive) for two crucial features:
+The key idea of solving this was to use [**enlive**](https://github.com/cgrand/enlive) for two crucial features:
 
 - its ability to turn html into data structures we can work easily with in clojure,
 - its ability to write selectors to easily filter out parts of html we are interested in.

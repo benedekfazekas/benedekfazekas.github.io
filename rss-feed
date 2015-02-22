@@ -1,6 +1,136 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<rss version="2.0"><channel><title>Of Herbs and Stewed Rabbit</title><link>https://github.com/nakkaya/static</link><description>Of Herbs and Stewed Rabbit</description><item><title>Webapp regression testing for cheap</title><link>https://github.com/2015/01/16/cheap-webapp-regression-testing/</link><pubDate>Fri, 16 Jan 2015 00:00:00 +0000</pubDate><description>&lt;p&gt;An automated regression test suite is a very valuable asset, however most of the times it &lt;a href=&quot;http://www.pitheringabout.com/?p=995&amp;cpage=1#comment-21254&quot;&gt;does not come cheap&lt;/a&gt;. You need to write your unit and/or functional tests and add them to the regression suite and then, and this is the real pain: maintain them. Almost every single refactoring means some work on the test code too. We've found a way around this at the MailOnline, and get a really valuable regression test suite for cheap. Perhaps it's worth to share the details.&lt;/p&gt;&lt;p&gt;Our regression test suite was not originally created as such. We aimed to solve a different testing problem. Since our project started off as a rewrite project, ie. rewriting the application producing the MailOnline website in clojure -- it was originally implemented in java and spring MVC --, the problem was how to make sure and prove that we are producing the same output. Mind you, even defining what is the same output here is not trivial as we did not care about whitespaces or other not really important, minor differences in the html output. Later we realised that the same idea can be reused to catch regressions and solve other testing problems too. More on this later.&lt;/p&gt;&lt;p&gt;The key idea of solving this was to use &lt;a href=&quot;https://github.com/cgrand/enlive&quot;&gt;enlive&lt;/a&gt; for two crucial features:&lt;/p&gt;
+<rss version="2.0"><channel><title>Of Herbs and Stewed Rabbit</title><link>https://github.com/nakkaya/static</link><description>Mostly about lisps, functional programming, emacs and sometimes perhaps dragons or just stewed rabbit</description><item><title>Java8 stream API vs Clojure fizzbuzzed</title><link>https://github.com/2015/02/06/java8-fizzbuzzed/</link><pubDate>Fri, 6 Feb 2015 00:00:00 +0000</pubDate><description>&lt;p&gt;Lately I came across a vanilla java solution for the good old &lt;a href=&quot;http://en.wikipedia.org/wiki/Fizz_buzz&quot;&gt;&lt;strong&gt;fizzbuzz&lt;/strong&gt;&lt;/a&gt; problem. This gave me the idea to try (finally) the java8 stream API: fizzbuzz seemed a small but fitting problem. And while at it why not code up a solution in clojure too so I can compare the two. This post documents the one afternoon adventure.&lt;/p&gt;&lt;p&gt;Let's also spice fizzbuzz up a bit with adding two extra requirements:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;- if the number in question has 3 in it we print &amp;#39;bingo&amp;#39;
+- at the end we print a kind of statistics where we show the number of occurrences of &amp;#39;Fizz&amp;#39;, &amp;#39;Buzz&amp;#39;, &amp;#39;FizzBuzz&amp;#39;, &amp;#39;Bingo&amp;#39; and not changed numbers
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Please note that although the first one is just an other condition it is also an other type of condition not related to any modulo of or any arithmetic operation with the given number. The second is interesting too because the solution needs say something about the transformed list. A bit of state might need to be maintened while doing the transformation, right? ;)&lt;/p&gt;&lt;p&gt;So first of all as a starting point let's see the vanilla solution in java:&lt;/p&gt;
+&lt;!--?prettify lang=java linenums=true --&gt;
+&lt;pre&gt;&lt;code&gt;public class FizzBuzz {
+
+    public void fizzBuzz(int rangeStart, int rangeEnd, PrintStream out) {
+
+        Map&amp;lt;String, AtomicInteger&amp;gt; statMap = new HashMap&amp;lt;String, AtomicInteger&amp;gt;();
+
+        List&amp;lt;String&amp;gt; transformedNumbers = new ArrayList&amp;lt;String&amp;gt;();
+        for(int i = rangeStart; i &amp;lt;= rangeEnd; i++){
+            String elem = &amp;quot;Integer&amp;quot;;
+            String iAsString = String.valueOf(i);
+            if (iAsString.contains(&amp;quot;3&amp;quot;)) {
+                elem = &amp;quot;Bingo&amp;quot;;
+            } else if (i % 15 == 0){
+                elem = &amp;quot;FizzBuzz&amp;quot;;
+            } else if(i % 3 == 0){
+                elem = &amp;quot;Fizz&amp;quot;;
+            } else if(i % 5 == 0){
+                elem = &amp;quot;Buzz&amp;quot;;
+            }
+            transformedNumbers.add((&amp;quot;Integer&amp;quot;.equals(elem))? iAsString : elem);
+            statMap.computeIfAbsent(elem, k -&amp;gt; new AtomicInteger(0));
+            statMap.get(elem).getAndIncrement();
+        }
+
+        out.println(transformedNumbers);
+        out.println();
+        out.println(statMap);
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Pretty naive approach but hey-ho we just started. Let's see the (kinda) equivalent in clojure:&lt;/p&gt;
+&lt;!--?prettify lang=clojure linenums=true --&gt;
+&lt;pre&gt;&lt;code&gt;(defn fizzbuzz [start end]
+  (letfn [(calc-stats [cmap elem] (let [key (if (string? elem) (keyword elem) :integer)]
+                                    (update-in cmap [key] #(if % (inc %) 1))))]
+    (let [fizzbuzzed (-&amp;gt;&amp;gt; end
+                          inc
+                          (range start)
+                          (map #(cond
+                                 (.contains (str %) &amp;quot;3&amp;quot;) &amp;quot;bingo&amp;quot;
+                                 (= (mod % 15) 0) &amp;quot;fizzbuzz&amp;quot;
+                                 (= (mod % 3) 0) &amp;quot;fizz&amp;quot;
+                                 (= (mod % 5) 0) &amp;quot;buzz&amp;quot;
+                                 :default %)))
+          stats (reduce calc-stats {} fizzbuzzed)]
+      [fizzbuzzed stats])))
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Just to point out the obvious differences in clojure you don't need to iterate through the list when fizzbuzzing it: just give a recipe in the anonymous function (line 7.) how to fizzbuzz a given element. In the java code you iterate through all the elements and update a bit of local state as a side effect to get the new list and the statistics. The usage of a REPL is obvious too when you look at the clojure code. You don't really need to worry about how to print your results while developing, playing with the code: the REPL will take care of it. My last point is types: in java you have to convert the original int to string while clojure being a dynamic language you are fine with a list with partly string and partly number elements.&lt;/p&gt;&lt;p&gt;In clojure after you had done the fizzbuzzing you can easily reduce the new list into the stats. That is a bit awkward though, you might want a solution which does the stats and the fizzbuzzing in one step. Also using the &lt;code&gt;cond&lt;/code&gt; is equivalent with the java &lt;code&gt;if&lt;/code&gt;/&lt;code&gt;else-if&lt;/code&gt;/&lt;code&gt;else&lt;/code&gt; construct but not really nice either. So bit of work on these points:&lt;/p&gt;
+&lt;!--?prettify lang=clojure linenums=true --&gt;
+&lt;pre&gt;&lt;code&gt;(defn- fizzbuzz&amp;amp;stats [list&amp;amp;stats n]
+  (let [mod-pred (fn [n word] #(when (= (mod % n) 0) word))
+        safe-inc (fn [n] (if n (inc n) 1))]
+    (if-let [s (some #(% n) [#(when (.contains (str %) &amp;quot;3&amp;quot;) &amp;quot;bingo&amp;quot;)
+                             (mod-pred 15 &amp;quot;fizzbuzz&amp;quot;)
+                             (mod-pred 3 &amp;quot;fizz&amp;quot;)
+                             (mod-pred 5 &amp;quot;buzz&amp;quot;)])]
+      (-&amp;gt; list&amp;amp;stats
+          (assoc :list (concat (:list list&amp;amp;stats) (seq [s])))
+          (update-in [(keyword s)] safe-inc))
+      (-&amp;gt; list&amp;amp;stats
+          (assoc :list (concat (:list list&amp;amp;stats) (seq [n])))
+          (update-in [:integer] safe-inc)))))
+
+(defn fizzbuzz-enhanced [start end]
+  (-&amp;gt;&amp;gt; end
+       inc
+       (range start)
+       (reduce fizzbuzz&amp;amp;stats {})))
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;The fizzbuzzed list and the stats is constructed in one reduce. Also eliminated the &lt;code&gt;cond&lt;/code&gt; and use &lt;code&gt;some&lt;/code&gt; with a vector of predicates: the first which applies wins and returns the fizzbuzz string for the element. If there is no winner stick with the original number. And of course either case add the element after fizzbuzzing to the result list inside the result hash. Reduce takes care of passing a fresh version of it to the next round.&lt;/p&gt;&lt;p&gt;Now it is time to get to the cake: code up something similar using the java8 stream API. I am sure there are other nice, very likely better solutions, don't hesitate to ping them to me on twitter ;)&lt;/p&gt;
+&lt;!--?prettify lang=java linenums=true --&gt;
+&lt;pre&gt;&lt;code&gt;public void fizzBuzz(int rangeStart, int rangeEnd, PrintStream out) {
+
+    String[] fizzbuzzed = rangeClosed(rangeStart, rangeEnd).mapToObj(FizzBuzz::intToFizzBuzz).toArray(String[]::new);
+    System.out.println(&amp;quot;start ---&amp;quot;);
+    System.out.println(Arrays.toString(fizzbuzzed));
+    System.out.println(&amp;quot;end   ---&amp;quot;);
+    System.out.println(&amp;quot;stats start ---&amp;quot;);
+    System.out.print(Arrays.stream(fizzbuzzed).collect(Stats::new, Stats::accept, Stats::combine));
+    System.out.println(&amp;quot;stats end   ---&amp;quot;);
+}
+
+class Stats implements Consumer&amp;lt;String&amp;gt; {
+
+    private int lucky, fizz, buzz, fizzbuzz, integer = 0;
+
+    public void accept(String elem) {
+        if (&amp;quot;lucky&amp;quot;.equals(elem)) lucky++;
+        else if (&amp;quot;fizz&amp;quot;.equals(elem)) fizz++;
+        else if (&amp;quot;buzz&amp;quot;.equals(elem)) buzz++;
+        else if (&amp;quot;fizzbuzz&amp;quot;.equals(elem))
+            fizzbuzz++;
+        else
+            integer++;
+    }
+
+    public void combine(Stats other) {
+        lucky += other.lucky;
+        fizz += other.fizz;
+        buzz += other.buzz;
+        fizzbuzz += other.fizzbuzz;
+        integer += other.integer;
+    }
+
+    public String toString() {
+        return &amp;quot;lucky: &amp;quot; + lucky +
+            &amp;quot;\n fizz: &amp;quot; + fizz +
+            &amp;quot;\n buzz: &amp;quot; + buzz +
+            &amp;quot;\n fizzbuzz: &amp;quot; + fizzbuzz +
+            &amp;quot;\n integer: &amp;quot; + integer;
+    }
+}
+
+public static String intToFizzBuzz(int nr) {
+    if (String.valueOf(nr).contains(&amp;quot;3&amp;quot;)) return &amp;quot;lucky&amp;quot;;
+    if (nr &amp;gt; 0 &amp;amp;&amp;amp; nr % (3 * 5) == 0) return &amp;quot;fizzbuzz&amp;quot;;
+    if (nr &amp;gt; 0 &amp;amp;&amp;amp; nr % 3 == 0) return &amp;quot;fizz&amp;quot;;
+    if (nr &amp;gt; 0 &amp;amp;&amp;amp; nr % 5 == 0) return &amp;quot;buzz&amp;quot;;
+    return String.valueOf(nr);
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Couple of notes. This solution is rather equivalent of the first iteration of clojure as it first creates the fizzbuzzed list and the reduces/consumes it to calculate the statistics. That is a bit awkwardly though as a stream which you run a terminal operation against you can't consume again. Although this makes sense it also means that the stream needs to be recreated for the reduction into the statistics because reducing it for printing is also a terminal operation. In Clojure there is no such problem as all the collections are persistent therefore you can easily reuse them. See the first clojure iteration code: the fizbuzzed list can be safely returned &lt;strong&gt;and&lt;/strong&gt; reduced into the statistics.&lt;/p&gt;&lt;p&gt;That said the stream API felt something I would not mind to work with on a more realistic problem. And mainly because of this API I tend to agree with Sean Corfield:&lt;/p&gt;
+&lt;blockquote&gt;&lt;p&gt;I think I can safely say that I would no longer rather fall on a sword than program in Java – as long as it’s Java 8!&lt;/p&gt;
+&lt;/blockquote&gt;&lt;p&gt;[from &lt;a href=&quot;http://seancorfield.github.io/blog/2014/06/20/some-thoughts-on-java-8/&quot;&gt;&lt;strong&gt;here&lt;/strong&gt;&lt;/a&gt;]&lt;/p&gt;&lt;p&gt;As wrapping up I mention two other fizzbuzz solutions. One I came across on the &lt;a href=&quot;http://rosettacode.org/wiki/FizzBuzz&quot;&gt;&lt;strong&gt;rosette code&lt;/strong&gt;&lt;/a&gt; and found it really elegant:&lt;/p&gt;
+&lt;!--?prettify lang=clojure linenums=true --&gt;
+&lt;pre&gt;&lt;code&gt;(map #(let [s (str %2 %3) ] (if (seq s) s (inc %)))
+        (range)
+        (cycle [&amp;quot;&amp;quot; &amp;quot;&amp;quot; &amp;quot;Fizz&amp;quot;])
+        (cycle [&amp;quot;&amp;quot; &amp;quot;&amp;quot; &amp;quot;&amp;quot; &amp;quot;&amp;quot; &amp;quot;Buzz&amp;quot;]))
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;I think this is my favourite as it does not even use &lt;code&gt;mod&lt;/code&gt; just simply exploits positions in lists and the fact that &lt;code&gt;map&lt;/code&gt; can go through multiple collections. Also laziness shines through this example: just mind blowingly awesome.&lt;/p&gt;&lt;p&gt;The &lt;a href=&quot;https://github.com/EnterpriseQualityCoding/FizzBuzzEnterpriseEdition&quot;&gt;&lt;strong&gt;other solution&lt;/strong&gt;&lt;/a&gt; shows how much fizzbuzz is a rabbit hole and also well... funny? sad? humbling? ;)&lt;/p&gt;</description></item><item><title>Webapp regression testing for cheap</title><link>https://github.com/2015/01/16/cheap-webapp-regression-testing/</link><pubDate>Fri, 16 Jan 2015 00:00:00 +0000</pubDate><description>&lt;p&gt;An automated regression test suite is a very valuable asset, however most of the times it &lt;a href=&quot;http://www.pitheringabout.com/?p=995&amp;cpage=1#comment-21254&quot;&gt;&lt;strong&gt;does not come cheap&lt;/strong&gt;&lt;/a&gt;. You need to write your unit and/or functional tests and add them to the regression suite and then, and this is the real pain: maintain them. Almost every single refactoring means some work on the test code too. We've found a way around this at the MailOnline, and get a really valuable regression test suite for cheap. Perhaps it's worth to share the details.&lt;/p&gt;&lt;p&gt;Our regression test suite was not originally created as such. We aimed to solve a different testing problem. Since our project started off as a rewrite project, ie. rewriting the application producing the MailOnline website in clojure -- it was originally implemented in java and spring MVC --, the problem was how to make sure and prove that we are producing the same output. Mind you, even defining what is the same output here is not trivial as we did not care about whitespaces or other not really important, minor differences in the html output. Later we realised that the same idea can be reused to catch regressions and solve other testing problems too. More on this later.&lt;/p&gt;&lt;p&gt;The key idea of solving this was to use &lt;a href=&quot;https://github.com/cgrand/enlive&quot;&gt;&lt;strong&gt;enlive&lt;/strong&gt;&lt;/a&gt; for two crucial features:&lt;/p&gt;
 &lt;ul&gt;
   &lt;li&gt;its ability to turn html into data structures we can work easily with in clojure,&lt;/li&gt;
   &lt;li&gt;its ability to write selectors to easily filter out parts of html we are interested in.&lt;/li&gt;

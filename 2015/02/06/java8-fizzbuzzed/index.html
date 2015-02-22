@@ -1,0 +1,131 @@
+<html lang="en" xml:lang="en" xmlns="http://www.w3.org/1999/xhtml"><head><meta content="text/html; charset=UTF-8" http-equiv="content-type" /><meta content="Play a bit with fizzbuzz to try java8 stream API and compare with vanilla clojure" name="description" /><meta content="java, java8, clojure, streams, streamAPI, fizzbuzz, fp" name="keywords" /><meta content="Benedek Fazekas" name="author" /><link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/3.2.1/css/font-awesome.min.css" rel="stylesheet" type="text/css" /><link href="//fonts.googleapis.com/css?family=Source+Code+Pro|Open+Sans" rel="stylesheet" type="text/css" /><link href="/bootstrap.min.css" rel="stylesheet" type="text/css" /><link href="/custom.css" rel="stylesheet" type="text/css" /><title>Java8 stream API vs Clojure fizzbuzzed</title></head><body><div class="content"><div class="container"><div class="row"><div class="col-md-8"><div class="page-header"><h1>Java8 stream API vs Clojure fizzbuzzed</h1></div><div class="entry"><p>Lately I came across a vanilla java solution for the good old <a href="http://en.wikipedia.org/wiki/Fizz_buzz"><strong>fizzbuzz</strong></a> problem. This gave me the idea to try (finally) the java8 stream API: fizzbuzz seemed a small but fitting problem. And while at it why not code up a solution in clojure too so I can compare the two. This post documents the one afternoon adventure.</p><p>Let's also spice fizzbuzz up a bit with adding two extra requirements:</p>
+<pre><code>- if the number in question has 3 in it we print &#39;bingo&#39;
+- at the end we print a kind of statistics where we show the number of occurrences of &#39;Fizz&#39;, &#39;Buzz&#39;, &#39;FizzBuzz&#39;, &#39;Bingo&#39; and not changed numbers
+</code></pre><p>Please note that although the first one is just an other condition it is also an other type of condition not related to any modulo of or any arithmetic operation with the given number. The second is interesting too because the solution needs say something about the transformed list. A bit of state might need to be maintened while doing the transformation, right? ;)</p><p>So first of all as a starting point let's see the vanilla solution in java:</p>
+<!--?prettify lang=java linenums=true -->
+<pre><code>public class FizzBuzz {
+
+    public void fizzBuzz(int rangeStart, int rangeEnd, PrintStream out) {
+
+        Map&lt;String, AtomicInteger&gt; statMap = new HashMap&lt;String, AtomicInteger&gt;();
+
+        List&lt;String&gt; transformedNumbers = new ArrayList&lt;String&gt;();
+        for(int i = rangeStart; i &lt;= rangeEnd; i++){
+            String elem = &quot;Integer&quot;;
+            String iAsString = String.valueOf(i);
+            if (iAsString.contains(&quot;3&quot;)) {
+                elem = &quot;Bingo&quot;;
+            } else if (i % 15 == 0){
+                elem = &quot;FizzBuzz&quot;;
+            } else if(i % 3 == 0){
+                elem = &quot;Fizz&quot;;
+            } else if(i % 5 == 0){
+                elem = &quot;Buzz&quot;;
+            }
+            transformedNumbers.add((&quot;Integer&quot;.equals(elem))? iAsString : elem);
+            statMap.computeIfAbsent(elem, k -&gt; new AtomicInteger(0));
+            statMap.get(elem).getAndIncrement();
+        }
+
+        out.println(transformedNumbers);
+        out.println();
+        out.println(statMap);
+    }
+}
+</code></pre><p>Pretty naive approach but hey-ho we just started. Let's see the (kinda) equivalent in clojure:</p>
+<!--?prettify lang=clojure linenums=true -->
+<pre><code>(defn fizzbuzz [start end]
+  (letfn [(calc-stats [cmap elem] (let [key (if (string? elem) (keyword elem) :integer)]
+                                    (update-in cmap [key] #(if % (inc %) 1))))]
+    (let [fizzbuzzed (-&gt;&gt; end
+                          inc
+                          (range start)
+                          (map #(cond
+                                 (.contains (str %) &quot;3&quot;) &quot;bingo&quot;
+                                 (= (mod % 15) 0) &quot;fizzbuzz&quot;
+                                 (= (mod % 3) 0) &quot;fizz&quot;
+                                 (= (mod % 5) 0) &quot;buzz&quot;
+                                 :default %)))
+          stats (reduce calc-stats {} fizzbuzzed)]
+      [fizzbuzzed stats])))
+</code></pre><p>Just to point out the obvious differences in clojure you don't need to iterate through the list when fizzbuzzing it: just give a recipe in the anonymous function (line 7.) how to fizzbuzz a given element. In the java code you iterate through all the elements and update a bit of local state as a side effect to get the new list and the statistics. The usage of a REPL is obvious too when you look at the clojure code. You don't really need to worry about how to print your results while developing, playing with the code: the REPL will take care of it. My last point is types: in java you have to convert the original int to string while clojure being a dynamic language you are fine with a list with partly string and partly number elements.</p><p>In clojure after you had done the fizzbuzzing you can easily reduce the new list into the stats. That is a bit awkward though, you might want a solution which does the stats and the fizzbuzzing in one step. Also using the <code>cond</code> is equivalent with the java <code>if</code>/<code>else-if</code>/<code>else</code> construct but not really nice either. So bit of work on these points:</p>
+<!--?prettify lang=clojure linenums=true -->
+<pre><code>(defn- fizzbuzz&amp;stats [list&amp;stats n]
+  (let [mod-pred (fn [n word] #(when (= (mod % n) 0) word))
+        safe-inc (fn [n] (if n (inc n) 1))]
+    (if-let [s (some #(% n) [#(when (.contains (str %) &quot;3&quot;) &quot;bingo&quot;)
+                             (mod-pred 15 &quot;fizzbuzz&quot;)
+                             (mod-pred 3 &quot;fizz&quot;)
+                             (mod-pred 5 &quot;buzz&quot;)])]
+      (-&gt; list&amp;stats
+          (assoc :list (concat (:list list&amp;stats) (seq [s])))
+          (update-in [(keyword s)] safe-inc))
+      (-&gt; list&amp;stats
+          (assoc :list (concat (:list list&amp;stats) (seq [n])))
+          (update-in [:integer] safe-inc)))))
+
+(defn fizzbuzz-enhanced [start end]
+  (-&gt;&gt; end
+       inc
+       (range start)
+       (reduce fizzbuzz&amp;stats {})))
+</code></pre><p>The fizzbuzzed list and the stats is constructed in one reduce. Also eliminated the <code>cond</code> and use <code>some</code> with a vector of predicates: the first which applies wins and returns the fizzbuzz string for the element. If there is no winner stick with the original number. And of course either case add the element after fizzbuzzing to the result list inside the result hash. Reduce takes care of passing a fresh version of it to the next round.</p><p>Now it is time to get to the cake: code up something similar using the java8 stream API. I am sure there are other nice, very likely better solutions, don't hesitate to ping them to me on twitter ;)</p>
+<!--?prettify lang=java linenums=true -->
+<pre><code>public void fizzBuzz(int rangeStart, int rangeEnd, PrintStream out) {
+
+    String[] fizzbuzzed = rangeClosed(rangeStart, rangeEnd).mapToObj(FizzBuzz::intToFizzBuzz).toArray(String[]::new);
+    System.out.println(&quot;start ---&quot;);
+    System.out.println(Arrays.toString(fizzbuzzed));
+    System.out.println(&quot;end   ---&quot;);
+    System.out.println(&quot;stats start ---&quot;);
+    System.out.print(Arrays.stream(fizzbuzzed).collect(Stats::new, Stats::accept, Stats::combine));
+    System.out.println(&quot;stats end   ---&quot;);
+}
+
+class Stats implements Consumer&lt;String&gt; {
+
+    private int lucky, fizz, buzz, fizzbuzz, integer = 0;
+
+    public void accept(String elem) {
+        if (&quot;lucky&quot;.equals(elem)) lucky++;
+        else if (&quot;fizz&quot;.equals(elem)) fizz++;
+        else if (&quot;buzz&quot;.equals(elem)) buzz++;
+        else if (&quot;fizzbuzz&quot;.equals(elem))
+            fizzbuzz++;
+        else
+            integer++;
+    }
+
+    public void combine(Stats other) {
+        lucky += other.lucky;
+        fizz += other.fizz;
+        buzz += other.buzz;
+        fizzbuzz += other.fizzbuzz;
+        integer += other.integer;
+    }
+
+    public String toString() {
+        return &quot;lucky: &quot; + lucky +
+            &quot;\n fizz: &quot; + fizz +
+            &quot;\n buzz: &quot; + buzz +
+            &quot;\n fizzbuzz: &quot; + fizzbuzz +
+            &quot;\n integer: &quot; + integer;
+    }
+}
+
+public static String intToFizzBuzz(int nr) {
+    if (String.valueOf(nr).contains(&quot;3&quot;)) return &quot;lucky&quot;;
+    if (nr &gt; 0 &amp;&amp; nr % (3 * 5) == 0) return &quot;fizzbuzz&quot;;
+    if (nr &gt; 0 &amp;&amp; nr % 3 == 0) return &quot;fizz&quot;;
+    if (nr &gt; 0 &amp;&amp; nr % 5 == 0) return &quot;buzz&quot;;
+    return String.valueOf(nr);
+}
+</code></pre><p>Couple of notes. This solution is rather equivalent of the first iteration of clojure as it first creates the fizzbuzzed list and the reduces/consumes it to calculate the statistics. That is a bit awkwardly though as a stream which you run a terminal operation against you can't consume again. Although this makes sense it also means that the stream needs to be recreated for the reduction into the statistics because reducing it for printing is also a terminal operation. In Clojure there is no such problem as all the collections are persistent therefore you can easily reuse them. See the first clojure iteration code: the fizbuzzed list can be safely returned <strong>and</strong> reduced into the statistics.</p><p>That said the stream API felt something I would not mind to work with on a more realistic problem. And mainly because of this API I tend to agree with Sean Corfield:</p>
+<blockquote><p>I think I can safely say that I would no longer rather fall on a sword than program in Java – as long as it’s Java 8!</p>
+</blockquote><p>[from <a href="http://seancorfield.github.io/blog/2014/06/20/some-thoughts-on-java-8/"><strong>here</strong></a>]</p><p>As wrapping up I mention two other fizzbuzz solutions. One I came across on the <a href="http://rosettacode.org/wiki/FizzBuzz"><strong>rosette code</strong></a> and found it really elegant:</p>
+<!--?prettify lang=clojure linenums=true -->
+<pre><code>(map #(let [s (str %2 %3) ] (if (seq s) s (inc %)))
+        (range)
+        (cycle [&quot;&quot; &quot;&quot; &quot;Fizz&quot;])
+        (cycle [&quot;&quot; &quot;&quot; &quot;&quot; &quot;&quot; &quot;Buzz&quot;]))
+</code></pre><p>I think this is my favourite as it does not even use <code>mod</code> just simply exploits positions in lists and the fact that <code>map</code> can go through multiple collections. Also laziness shines through this example: just mind blowingly awesome.</p><p>The <a href="https://github.com/EnterpriseQualityCoding/FizzBuzzEnterpriseEdition"><strong>other solution</strong></a> shows how much fizzbuzz is a rabbit hole and also well... funny? sad? humbling? ;)</p></div></div><div class="col-md-4"></div><div class="col-md-12 post-tags">Tags: <a href="/tags/#java,">java, </a><a href="/tags/#java8,">java8, </a><a href="/tags/#clojure,">clojure, </a><a href="/tags/#streams,">streams, </a><a href="/tags/#streamAPI,">streamAPI, </a><a href="/tags/#fizzbuzz,">fizzbuzz, </a><a href="/tags/#fp">fp </a></div></div></div><script src="//google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script><script src="//google-code-prettify.googlecode.com/svn/trunk/src/lang-clj.js"></script><div class="footer"><div class="container"><div class="row"><div class="col-md-12"><p>Built with <a href="http://getbootstrap.com/">Bootstrap</a> and <a href="https://github.com/nakkaya/static">Static</a><br /><p>&copy; 2014-2015 Benedek Fazekas | <a href="https://github.com/benedekfazekas">@github</a> | <a href="https://twitter.com/bfazek">@twitter</a> | </p></p></div></div></div></div></div></body></html>

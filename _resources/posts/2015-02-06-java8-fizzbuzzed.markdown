@@ -1,5 +1,5 @@
 ---
-title: Java8 stream API and clojure compared with fizzbuzz
+title: Java8 stream API vs Clojure fizzbuzzed
 date: 2015-02-06
 description: Play a bit with fizzbuzz to try java8 stream API and compare with vanilla clojure
 tags: java8, clojure, streams, streamAPI, fizzbuzz
@@ -7,7 +7,7 @@ tags: java8, clojure, streams, streamAPI, fizzbuzz
 
 Lately I came across a vanilla java solution for the good old [**fizzbuzz**]() problem. This gave me the idea to try (finally) the java8 stream API: fizzbuzz seemed a small but fitting problem. And while at it why not code up a solution in clojure too so I can compare the two. This post documents the one afternoon adventure.
 
-Lets also spice fizzbuzz up a bit with adding two extra requirements:
+Let's also spice fizzbuzz up a bit with adding two extra requirements:
 
     - if the number in question has 3 in it we print 'bingo'
     - at the end we print a kind of statistics where we show the number of occurences of 'Fizz', 'Buzz', 'FizzBuzz', 'Bingo' and not changed numbers

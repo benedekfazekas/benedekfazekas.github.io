@@ -1,6 +1,0 @@
----
-title: Making a restful API implementation more concise with Macros
-date: 2015-02-20
-description: Building a rest API with ring, compojure and macros
-tags: clojure, macro, crud, rest, lisp
----

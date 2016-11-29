@@ -32,8 +32,7 @@
      	  (conj h [:a {:href (str "/tags/#" v)} (str v " ")]))
      	[:div.col-md-12 {:class "post-tags"} "Tags: "]
      	(.split (:tags metadata) " ")))]]
-   [:script {:src "//google-code-prettify.googlecode.com/svn/loader/run_prettify.js"}]
-   [:script {:src "//google-code-prettify.googlecode.com/svn/trunk/src/lang-clj.js"}]
+   [:script {:src "https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js?lang=clj&lang=ruby"}]
 
    [:div.footer
     [:div.container
@@ -44,7 +43,7 @@
         [:a {:href "https://github.com/nakkaya/static"} "Static"]
         [:br]
         [:p
-         (interleave ["&copy; 2014-2015 Benedek Fazekas"
+         (interleave ["&copy; 2014-2016 Benedek Fazekas"
                       [:a {:href "https://github.com/benedekfazekas"} "@github"]
                       [:a {:href "https://twitter.com/bfazek"} "@twitter"]]
                      (cycle [" | "]))]]]]]]]]]

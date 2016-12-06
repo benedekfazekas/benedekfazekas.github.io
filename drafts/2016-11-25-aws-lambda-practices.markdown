@@ -13,7 +13,7 @@ Our business runs on cloud based services almost exclusively, AWS mostly but als
 
 The recommended use case for lambdas seem to be event processing where the event is an upload to an S3 bucket or message in a Kinesis stream. We found that we are fine with invoking lambdas directly (even synchronously sometimes but mostly asynchronously) from our existing web application. Maintaining an already existing web application and only adding lambdas as separately scalable backend services also meant that we did not need buy into the dreaded AWS API gateway. We also stick to our already existing stack/platform: most of our lambdas are implemented in JVM clojure -- where we want to mitigate the occasional long warm up time we use lambdas written in clojurescript compiled for node.
 
-Some time ago we decided to give a try to a very involved feature on our site (perhaps the most complex so far): combining our data on the ever changing energy market and the behavioural data the visitors of the uSwitch web site to predict how a hipotetical energy tariff would perform on a given energy market. The actual prediction is done by a statistical model developed in `R`. The model is quite an interesting topic in itself but out of the scope of this post. For this model to work though we needed to generate a big bulk (exact number) of hipotetical visits of a virtual result table backed by a hipotetical market. This task involves making up and pricing custom energy markets, sampling user profiles based on real visits and replay those profiles visiting our hipotetical markets. Some steps here were parallelisable and more importantly we could break up the user profiles sample into chunks and work on those chunks in parallel up to the end of the task: creating virtual impressions.
+Some time ago we decided to give a try to a very involved feature on our site (perhaps the most complex so far): combining our data on the ever changing energy market and the behavioural data the visitors of the uSwitch web site to predict how a hypothetical energy tariff would perform on a given energy market. The actual prediction is done by a statistical model developed in `R`. The model is quite an interesting topic in itself but out of the scope of this post. For this model to work though we needed to generate a big bulk [todo: exact number] of hypothetical visits of a virtual result table backed by a hypothetical market. This task involves making up and pricing custom energy markets, sampling user profiles based on real visits and replay those profiles visiting our hypothetical markets. Some steps here were parallelisable and more importantly we could break up the user profiles sample into chunks and work on those chunks in parallel up to the end of the task: creating virtual impressions.
 
 ### Calling a lambda, lambdas calling lambdas and callbacks
 
@@ -35,7 +35,7 @@ For a synchronous call or you can change the `invocation-type` to `"Event"` for 
                     payload: payload.to_json,
                     invocation_type: "RequestResponse"})
 
-We do use synchronous calls sometimes. Apart from the usual drawbacks this also means that the lambda won't be retried by AWS if fails. Also for the usecase described above we wanted to call lambdas from lambdas and not necessarily sitting around in the caller while the callee finishes or possibly trigger some behaviour somewhere else than the caller when the callee is done. For these reasons we use a redis pub/sub topic to signal if a lambda successfully finished and done. The topic name contains a reference to the lambda and also a request id so we identify and separate runs and lambdas. We can also tap into these topics if we are interested in how far the process got, either for tracing purposes or for example implementing a progress bar. We used to use SNS topics as well instead of calling lambdas directly as a way of making lambda calls indirect but have not seen much benefit of this so moved back to direct, asynchronous calls.
+We do use synchronous calls sometimes. Apart from the usual drawbacks this also means that the lambda won't be retried by AWS if fails. Also for the usecase described above we wanted to call lambdas from lambdas and not necessarily sitting around in the caller while the callee finishes or possibly trigger some behaviour somewhere else than the caller when the callee is done. For these reasons we use a Redis pub/sub topic to signal if a lambda successfully finished and done. The topic name contains a reference to the lambda and also a request id so we identify and separate runs and lambdas. We can also tap into these topics if we are interested in how far the process got, either for tracing purposes or for example implementing a progress bar. We used to use SNS topics as well instead of calling lambdas directly as a way of making lambda calls indirect but have not seen much benefit of this so moved back to direct, asynchronous calls.
 
 
 
@@ -75,7 +75,7 @@ We also abstract away the way how we call lambdas from lambdas:
     (defn invoke [target message]
       (if config/development?
         (future ((lookup-fn target) message))
-        (let [json-message (json/generate-string message)
+        (let [json-message (cheshire.core/generate-string message)
               lambda-arn (->> (name *lambda-environment*)
                                str/upper-case
                                (format arn-pattern (get target->lambda-name-mapping target target)))]
@@ -128,11 +128,11 @@ We keep the Logging very simple. We don't buy into the logging libraries of the 
         (binding [*lambda-logger* (.getLogger context)
                   *lambda-environment* (lambda-environment context)]
           (let [w (io/writer out)
-                input (json/decode-stream (io/reader in) true)]
+                input (cheshire.core/decode-stream (io/reader in) true)]
             (binding [*request-id* (:request-id input)]
               (try
                 (-> (f input)
-                    (json/encode-stream w))
+                    (cheshire.core/encode-stream w))
                 (.flush w)
                 (catch Exception e
                   (log-error (str (.getMessage e) "\n") (str/join "\n    at " (.getStackTrace e)))
@@ -140,6 +140,20 @@ We keep the Logging very simple. We don't buy into the logging libraries of the 
 
     (defn -handleRequest [_ in out context]
       ((lu/wrap-handler-impl context execute!) in out))
+
+Also for completeness sake here is the way how logging is implemented:
+
+<!--?prettify lang=clojure linenums=true -->
+    (defn- log-tagged [tags msg & msg-chunks]
+      (let [tag-string (str/join (map #(str "[" % "]") tags))
+            full-msg (str (tf/unparse time-format (time/now)) " " tag-string " -- " (str/join " " (cons msg msg-chunks)))]
+        (if (bound? #'*lambda-logger*)
+          (.log *lambda-logger* full-msg)
+          (println "[logger missing]" full-msg))))
+
+    (defn log-error [msg & msg-chunks]
+      (apply log-tagged [*lambda-environment* *request-id* "ERROR"] msg msg-chunks))
+
 
 Logging automatically gets captured by AWS CloudWatch which gives us the option to easily load the json formatted logs into an ELK installation either via directly loading it into Elasticsearch or forwarding it to a kinesis stream or a lambda for some preprocessing.
 
